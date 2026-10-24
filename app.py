@@ -81,14 +81,25 @@ if st.button("Evaluate & Generate Story Skeleton"):
             """
             
             # Modern SDK call using gemini-3.8-flash and system instruction config
-            response = client.models.generate_content(
-                model="gemini-3.8-flash",
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    system_instruction="You are an uncompromising, brilliant developmental story editor who enforces strict narrative architecture."
+            # Try the fast flash model first; fallback to pro if a 503 traffic spike hits
+            try:
+                response = client.models.generate_content(
+                    model="gemini-3.8-flash",
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        system_instruction="You are an uncompromising, brilliant developmental story editor who enforces strict narrative architecture."
+                    )
                 )
-            )
-            
+            except Exception as flash_error:
+                # Fallback model if flash is unavailable
+                response = client.models.generate_content(
+                    model="gemini-1.5-pro",
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        system_instruction="You are an uncompromising, brilliant developmental story editor who enforces strict narrative architecture."
+                    )
+                )
+ 
             skeleton_result = response.text
             
             st.success("Analysis Complete!")
