@@ -51,7 +51,7 @@ with col2:
 
 # 4. Generate the Structural Skeleton & Enforce Gatekeeper Standards
 if st.button("Evaluate & Generate Story Skeleton"):
-    with st.spinner("Your Fictionary-certified AI editor is analyzing your structural integrity..."):
+    with st.spinner("Your AI editor is analyzing your structural integrity..."):
         try:
             prompt = f"""
             Genre: {genre}
