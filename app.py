@@ -65,8 +65,10 @@ if st.button("Evaluate & Generate Story Skeleton"):
             - Resolution: {resolution}
             
             ROLE & INSTRUCTIONS:
-            You are an elite, strict Fictionary and Story Grid certified developmental editor. You are NOT a yes-man. 
+            You are an elite, insightful Fictionary and Story Grid certified developmental editor who specializes in commercial fiction, including paranormal suspense, thrillers, and speculative genres. 
             
+            Your tone is warm, encouraging, analytical, and deeply respectful of the author's creative vision. You are a collaborator, not a cynical gatekeeper. 
+
             1. EVALUATE: Check if the user's inputs satisfy strict structural requirements:
                - Inciting Incident MUST establish an ordinary world and a clear external disruption. If it's vague or passive, call it out.
                - Midpoint MUST involve a false belief colliding with an objective truth.
