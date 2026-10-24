@@ -4,7 +4,10 @@ from google import genai
 from google.genai import types
 from dotenv import load_dotenv
 
-# Load local .env variables automatically so no KeyError happens
+# Import our custom PDF modular helper
+from pdfmaker import create_styled_pdf
+
+# Load local .env variables automatically
 load_dotenv()
 
 # 1. Page Configuration & Landing Page Branding
@@ -82,7 +85,7 @@ if st.button("Evaluate & Generate Story Skeleton"):
             You don't have to navigate the blank page alone. Book a **free 15-minute 1-on-1 Story Diagnostic Call with Cassandra** to review your structural skeleton live, talk through your bottlenecks, and map out your next steps."
             """
             
-            # Modern SDK call using gemini-3.8-flash and system instruction config
+            # Modern SDK call using gemini-3.8-flash
             response = client.models.generate_content(
                 model="gemini-3.8-flash",
                 contents=prompt,
@@ -97,11 +100,17 @@ if st.button("Evaluate & Generate Story Skeleton"):
             st.markdown("---")
             st.markdown(skeleton_result)
             
+            # Modular call to generate PDF bytes
+            pdf_data = create_styled_pdf(
+                title_text="Story Structural Skeleton Blueprint",
+                content_markdown=skeleton_result
+            )
+            
             st.download_button(
-                label="Download My Evaluated Skeleton Blueprint (TXT)",
-                data=skeleton_result,
-                file_name="story_skeleton_blueprint.txt",
-                mime="text/plain"
+                label="📄 Download My Evaluated Skeleton Blueprint (PDF)",
+                data=pdf_data,
+                file_name="story_skeleton_blueprint.pdf",
+                mime="application/pdf"
             )
             
         except Exception as e:
