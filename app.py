@@ -77,7 +77,7 @@ if st.button("Evaluate & Generate Story Skeleton"):
             
             # Use the clean, standard model name string supported across v1/v1beta
             model = genai.GenerativeModel(
-                model_name="gemini-1.5-flash",
+                model_name="gemini-1.5-pro",
                 system_instruction="You are an uncompromising, brilliant developmental story editor who enforces strict narrative architecture."
             )
             
