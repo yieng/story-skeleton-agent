@@ -122,7 +122,6 @@ if st.session_state.workflow_stage in ["awaiting_first_reply", "awaiting_second_
             st.success(f"**You:** {message['content']}")
 
 if st.session_state.workflow_stage == "awaiting_first_reply":
-    # === ADJUSTMENT 1: Multi-line text area for first lore clarification ===
     user_reply_1 = st.text_area("Reply to your editor / Clarify your lore (Multi-line):", key="user_reply_1_box", height=150, placeholder="Explain living relatives, true character agendas, backstory details...")
     
     if st.button("Generate Interim Master Blueprint"):
@@ -147,16 +146,16 @@ if st.session_state.workflow_stage == "awaiting_first_reply":
                 
                 st.session_state.interim_blueprint = interim_response.text
                 
-                # === ADJUSTMENT 2: Trigger Second Follow-up asking 3 targeted alignment questions ===
+                # Trigger Second Follow-up asking 3 neutral, open alignment questions
                 tweaks_prompt = f"""
-                Review the interim blueprint and dialogue above. Provide 3 targeted, specific editorial questions asking the writer WHAT NEEDS TO BE CHANGED or fine-tuned to fully align with their ultimate creative vision (e.g. specific emotional beats, dramatic twists like maritime roles, psychological stakes).
+                Review the interim blueprint and dialogue above. Provide 3 targeted, open editorial questions asking the writer WHAT SUBPLOTS, EMOTIONAL NUANCES, OR ADDITIONAL INSIGHTS NEED TO BE ADJUSTED to fully align with their ultimate creative vision.
                 """
                 
                 tweaks_response = client.models.generate_content(
                     model="gemini-3.8-flash",
                     contents=tweaks_prompt,
                     config=types.GenerateContentConfig(
-                        system_instruction="You are a collaborative editor asking 3 targeted questions for final polish."
+                        system_instruction="You are a collaborative editor asking 3 neutral, open questions for final polish."
                     )
                 )
                 
@@ -164,14 +163,14 @@ if st.session_state.workflow_stage == "awaiting_first_reply":
                 st.session_state.workflow_stage = "awaiting_second_tweaks"
                 st.rerun()
 
-# 6. Second Follow-up Loop: Fine-Tuning & Plot Twists (Multi-Line Box 2)
+# 6. Second Follow-up Loop: Neutral Fine-Tuning & Plot Twists (Multi-Line Box 2)
 if st.session_state.workflow_stage == "awaiting_second_tweaks":
     st.markdown("---")
     st.subheader("Final Polish & Creative Tweaks")
     st.markdown(st.session_state.interim_blueprint)
     
-    # === ADJUSTMENT 3: Second multi-line text area for specific final tweaks (e.g. skipper/officiant twist) ===
-    user_reply_2 = st.text_area("Specify what needs to be changed / Add final plot twists (e.g., Theo as skipper/officiant, emotional breakdown):", key="user_reply_2_box", height=150, placeholder="Provide your final targeted changes here...")
+    # === ADJUSTMENT: Neutralized prompt label inviting subplots/twists without leading the writer ===
+    user_reply_2 = st.text_area("Specify what needs to be changed / Add subplots and additional insights not captured in the interim:", key="user_reply_2_box", height=150, placeholder="Provide your final targeted changes, plot twists, or emotional beats here...")
     
     if st.button("Produce Final PDF-Ready Master Blueprint"):
         if user_reply_2:
@@ -182,18 +181,18 @@ if st.session_state.workflow_stage == "awaiting_second_tweaks":
                 Full dialogue and iteration history:
                 {st.session_state.chat_history}
                 
-                The writer has provided their final targeted changes above (such as specific emotional beats or the maritime skipper/officiant twist). 
+                The writer has provided their final targeted changes and additional insights above. 
                 
                 CRITICAL RULES FOR FINAL SYNTHESIS:
                 1. STRICTLY RESPECT USER CANON: Use only provided names, family statuses, and backstories.
                 2. NO UNSOLICITED SURNAMES: Do not invent or assign unstated last names.
-                3. INTEGRATE FINAL TWEAKS: Seamlessly weave the writer's final requested modifications (e.g., Theo's role as skipper/officiant pronouncing them man and wife while heartbroken) into the narrative structure.
+                3. INTEGRATE FINAL TWEAKS: Seamlessly weave the writer's final requested modifications (such as specific character roles, emotional heartbreak, and realistic thriller resolutions like frozen inheritance for sequels) into the narrative structure.
                 4. Synthesize everything into a complete, comprehensive 1,000-word skeletal narrative blueprint tailored for the {genre} genre.
                 
-                At the very bottom, include this exact closing message:
+                At the very bottom, include this exact closing message with the Calendly link:
                 "---
                 ### Ready to turn this skeleton into a fully drafted manuscript?
-                You don't have to navigate the blank page alone. Book a **free 15-minute 1-on-1 Story Diagnostic Call with Cassandra** to review your structural skeleton live, talk through your bottlenecks, and map out your next steps."
+                You don't have to navigate the blank page alone. Book a **free 15-minute 1-on-1 Story Diagnostic Call with Cassandra** at [https://calendly.com/yieng/15min](https://calendly.com/yieng/15min) to review your structural skeleton live, talk through your bottlenecks, and map out your next steps."
                 """
                 
                 final_response = client.models.generate_content(
