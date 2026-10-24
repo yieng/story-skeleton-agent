@@ -2,8 +2,8 @@ import os
 import streamlit as st
 import google.generativeai as genai
 
-# 1. Page Configuration & Landing Page Branding
-st.set_page_config(page_title="The Story Skeleton Gatekeeper | Cassandra Lee", page_layout="centered")
+# 1. Page Configuration & Landing Page Branding (Fixed 'page_layout' to 'layout')
+st.set_page_config(page_title="The Story Skeleton Gatekeeper | Cassandra Lee", layout="centered")
 
 st.title("The Story Skeleton Architect")
 st.markdown("""
@@ -73,10 +73,8 @@ if st.button("Evaluate & Generate Story Skeleton"):
             "---
             ### Ready to turn this skeleton into a fully drafted manuscript?
             You don't have to navigate the blank page alone. Book a **free 15-minute 1-on-1 Story Diagnostic Call with Cassandra** to review your structural skeleton live, talk through your bottlenecks, and map out your next steps."
-            [Insert a placeholder link or instructions for your Calendly / booking link here]
             """
             
-            # Using Gemini 1.5 Flash (Free Tier, blazing fast for structuring)
             model = genai.GenerativeModel(
                 model_name="gemini-1.5-flash",
                 system_instruction="You are an uncompromising, brilliant developmental story editor who enforces strict narrative architecture."
@@ -89,7 +87,6 @@ if st.button("Evaluate & Generate Story Skeleton"):
             st.markdown("---")
             st.markdown(skeleton_result)
             
-            # Offer download option
             st.download_button(
                 label="Download My Evaluated Skeleton Blueprint (TXT)",
                 data=skeleton_result,
