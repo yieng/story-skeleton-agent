@@ -1,6 +1,11 @@
 import os
 import streamlit as st
-import google.generativeai as genai
+from google import genai
+from google.genai import types
+from dotenv import load_dotenv
+
+# Load local .env variables automatically so no KeyError happens
+load_dotenv()
 
 # 1. Page Configuration & Landing Page Branding
 st.set_page_config(page_title="The Story Skeleton Gatekeeper | Cassandra Lee", layout="centered")
@@ -12,7 +17,7 @@ Writers shouldn't feed their manuscripts into AI training grinders. This tool ac
 """)
 st.markdown("---")
 
-# 2. Secure Gemini API Key Input (Free Tier via Google AI Studio)
+# 2. Secure Gemini API Key Input (Pulls from .env or UI fallback)
 api_key = os.environ.get("GEMINI_API_KEY")
 if not api_key:
     api_key = st.text_input("Enter your Google Gemini API Key (Free):", type="password")
@@ -21,8 +26,8 @@ if not api_key:
     st.warning("Please enter your Gemini API key above to continue (get one free at aistudio.google.com).")
     st.stop()
 
-# Configure Gemini Client
-genai.configure(api_key=api_key)
+# Initialize the modern Google GenAI Client
+client = genai.Client(api_key=api_key)
 
 # 3. User Inputs: Genre & Narrative Building Blocks
 st.subheader("Step 1: Choose Your Commercial Genre")
@@ -75,13 +80,15 @@ if st.button("Evaluate & Generate Story Skeleton"):
             You don't have to navigate the blank page alone. Book a **free 15-minute 1-on-1 Story Diagnostic Call with Cassandra** to review your structural skeleton live, talk through your bottlenecks, and map out your next steps."
             """
             
-            # Use the clean, standard model name string supported across v1/v1beta
-            model = genai.GenerativeModel(
-                model_name="gemini-1.5-pro",
-                system_instruction="You are an uncompromising, brilliant developmental story editor who enforces strict narrative architecture."
+            # Modern SDK call using gemini-2.0-flash and system instruction config
+            response = client.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction="You are an uncompromising, brilliant developmental story editor who enforces strict narrative architecture."
+                )
             )
             
-            response = model.generate_content(prompt)
             skeleton_result = response.text
             
             st.success("Analysis Complete!")
