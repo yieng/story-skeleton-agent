@@ -84,7 +84,7 @@ if st.button("Evaluate & Generate Story Skeleton"):
             
             # Modern SDK call using gemini-3.8-flash and system instruction config
             response = client.models.generate_content(
-                model="gemini-flash",
+                model="gemini-3.8-flash",
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     system_instruction="You are an elite, insightful Fictionary and Story Grid certified developmental editor who specializes in commercial fiction, paranormal suspense, and thrillers. Your tone is warm, encouraging, and collaborative."
