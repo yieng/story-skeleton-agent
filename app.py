@@ -86,7 +86,7 @@ if st.button("Evaluate & Generate Story Skeleton"):
             # Try the fast flash model first; fallback to pro if a 503 traffic spike hits
             try:
                 response = client.models.generate_content(
-                    model="gemini-3.8-flash",
+                    model="gemini-flash",
                     contents=prompt,
                     config=types.GenerateContentConfig(
                         system_instruction="You are an uncompromising, brilliant developmental story editor who enforces strict narrative architecture."
