@@ -75,10 +75,14 @@ if st.button("Evaluate & Generate Story Skeleton"):
             You don't have to navigate the blank page alone. Book a **free 15-minute 1-on-1 Story Diagnostic Call with Cassandra** to review your structural skeleton live, talk through your bottlenecks, and map out your next steps."
             """
             
+            # Fix: Use the correct model name parameter for Gemini
             model = genai.GenerativeModel(
-                model_name="gemini-1.5-flash",
-                system_instruction="You are an uncompromising, brilliant developmental story editor who enforces strict narrative architecture."
+                model_name="models/gemini-1.5-flash"
             )
+            #model = genai.GenerativeModel(
+            #    model_name="gemini-1.5-flash",
+            #    system_instruction="You are an uncompromising, brilliant developmental story editor who enforces strict narrative architecture."
+            #)
             
             response = model.generate_content(prompt)
             skeleton_result = response.text
