@@ -80,9 +80,9 @@ if st.button("Evaluate & Generate Story Skeleton"):
             You don't have to navigate the blank page alone. Book a **free 15-minute 1-on-1 Story Diagnostic Call with Cassandra** to review your structural skeleton live, talk through your bottlenecks, and map out your next steps."
             """
             
-            # Modern SDK call using gemini-2.0-flash and system instruction config
+            # Modern SDK call using gemini-3.8-flash and system instruction config
             response = client.models.generate_content(
-                model="gemini-2.0-flash",
+                model="gemini-3.8-flash",
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     system_instruction="You are an uncompromising, brilliant developmental story editor who enforces strict narrative architecture."
