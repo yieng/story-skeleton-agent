@@ -95,7 +95,7 @@ if st.button("Evaluate & Generate Story Skeleton"):
             except Exception as flash_error:
                 # Fallback model if flash is unavailable
                 response = client.models.generate_content(
-                    model="gemini-1.5-pro",
+                    model="gemini--pro",
                     contents=prompt,
                     config=types.GenerateContentConfig(
                         system_instruction="You are an uncompromising, brilliant developmental story editor who enforces strict narrative architecture."
