@@ -2,7 +2,7 @@ import os
 import streamlit as st
 import google.generativeai as genai
 
-# 1. Page Configuration & Landing Page Branding (Fixed 'page_layout' to 'layout')
+# 1. Page Configuration & Landing Page Branding
 st.set_page_config(page_title="The Story Skeleton Gatekeeper | Cassandra Lee", layout="centered")
 
 st.title("The Story Skeleton Architect")
@@ -75,14 +75,11 @@ if st.button("Evaluate & Generate Story Skeleton"):
             You don't have to navigate the blank page alone. Book a **free 15-minute 1-on-1 Story Diagnostic Call with Cassandra** to review your structural skeleton live, talk through your bottlenecks, and map out your next steps."
             """
             
-            # Fix: Use the correct model name parameter for Gemini
+            # Use the clean, standard model name string supported across v1/v1beta
             model = genai.GenerativeModel(
-                model_name="models/gemini-1.5-flash"
+                model_name="gemini-1.5-flash",
+                system_instruction="You are an uncompromising, brilliant developmental story editor who enforces strict narrative architecture."
             )
-            #model = genai.GenerativeModel(
-            #    model_name="gemini-1.5-flash",
-            #    system_instruction="You are an uncompromising, brilliant developmental story editor who enforces strict narrative architecture."
-            #)
             
             response = model.generate_content(prompt)
             skeleton_result = response.text
