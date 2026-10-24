@@ -40,7 +40,7 @@ genre = st.selectbox(
 )
 
 st.subheader("Step 2: Input Your Core Story Beats")
-st.markdown("Provide your ideas below. *Warning:* Our AI editor is strict. If a beat lacks narrative stakes or structural clarity, it will ask you to rewrite it!")
+st.markdown("Provide your ideas below. \n*Warning:* Our AI editor is strict. If a beat lacks narrative stakes or is unclear, it will ask you to rewrite it!")
 
 col1, col2 = st.columns(2)
 with col1:

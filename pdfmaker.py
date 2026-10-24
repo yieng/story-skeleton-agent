@@ -7,7 +7,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, HRFlowable
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 def create_styled_pdf(title_text: str, content_markdown: str) -> bytes:
-    """Takes a title and markdown content, parses formatting, and returns PDF bytes in memory."""
+    """Takes a title and markdown content, parses formatting safely for ReportLab, and returns PDF bytes."""
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer,
@@ -47,22 +47,22 @@ def create_styled_pdf(title_text: str, content_markdown: str) -> bytes:
     h1_style = ParagraphStyle(
         'Heading1_Custom',
         parent=styles['Heading2'],
-        fontSize=14,
-        leading=18,
+        fontSize=13,
+        leading=17,
         textColor=PRIMARY_COLOR,
         fontName='Helvetica-Bold',
-        spaceBefore=14,
+        spaceBefore=12,
         spaceAfter=6
     )
     
     h2_style = ParagraphStyle(
         'Heading2_Custom',
         parent=styles['Heading3'],
-        fontSize=12,
-        leading=16,
+        fontSize=11,
+        leading=15,
         textColor=ACCENT_COLOR,
         fontName='Helvetica-Bold',
-        spaceBefore=10,
+        spaceBefore=8,
         spaceAfter=4
     )
     
@@ -73,7 +73,7 @@ def create_styled_pdf(title_text: str, content_markdown: str) -> bytes:
         leading=15,
         textColor=TEXT_COLOR,
         fontName='Helvetica',
-        spaceAfter=8
+        spaceAfter=6
     )
 
     bullet_style = ParagraphStyle(
@@ -90,28 +90,33 @@ def create_styled_pdf(title_text: str, content_markdown: str) -> bytes:
     story.append(Paragraph("THE STORY SKELETON ARCHITECT | CASSANDRA LEE", subtitle_style))
     story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#CBD5E1'), spaceAfter=15))
     
-    # Simple Markdown Parser
+    # Process markdown lines safely
     lines = content_markdown.split('\n')
     for line in lines:
         line_str = line.strip()
-        if not line_str:
+        if not line_str or line_str == '- *' or line_str == '---':
+            if line_str == '---':
+                story.append(Spacer(1, 4))
+                story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#E2E8F0'), spaceAfter=8))
             continue
             
+        # Clean up stray backslashes or rogue tag issues from AI output
+        line_str = line_str.replace('&', '&amp;')
+        
+        # Convert Markdown Bold and Italics safely
         formatted_line = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', line_str)
         formatted_line = re.sub(r'\*(.*?)\*', r'<i>\1</i>', formatted_line)
         
-        if line_str.startswith('### '):
-            clean_text = formatted_line.replace('### ', '')
+        # Determine element type based on prefix
+        if line_str.startswith('### ') or line_str.startswith('# '):
+            clean_text = re.sub(r'^#+\s*', '', formatted_line)
             story.append(Paragraph(clean_text, h1_style))
         elif line_str.startswith('#### '):
-            clean_text = formatted_line.replace('#### ', '')
+            clean_text = re.sub(r'^#+\s*', '', formatted_line)
             story.append(Paragraph(clean_text, h2_style))
-        elif line_str.startswith('- ') or line_str.startswith('* '):
-            clean_text = formatted_line[2:]
+        elif line_str.startswith('- ') or line_str.startswith('* ') or line_str.startswith('-   - '):
+            clean_text = re.sub(r'^(-\s*\*?|\*\s*|-\s*-\s*)', '', formatted_line)
             story.append(Paragraph(f"• {clean_text}", bullet_style))
-        elif line_str.startswith('---'):
-            story.append(Spacer(1, 6))
-            story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#E2E8F0'), spaceAfter=10))
         else:
             story.append(Paragraph(formatted_line, body_style))
             
