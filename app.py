@@ -60,10 +60,11 @@ with col2:
     climax = st.text_input("5. Crisis-Driven Climax", placeholder="What is the final showdown choice?")
     resolution = st.text_input("6. Resolution", placeholder="How has the world/protagonist changed?")
 
-# 4. Generate Initial Collaborative Feedback & Clarifications
+# 4. Generate Initial Collaborative Feedback & Socratic Clarifications
 if st.button("Evaluate & Consult Story Beats"):
     with st.spinner("Your collaborative editor is reviewing your lore and structure..."):
         try:
+            # === ADJUSTMENT 1: Enforced Soft Hedging & Zero Hallucination of Unstated Characters/Surnames ===
             initial_prompt = f"""
             Genre: {genre}
             
@@ -76,19 +77,19 @@ if st.button("Evaluate & Consult Story Beats"):
             - Resolution: {resolution}
             
             ROLE & INSTRUCTIONS:
-            You are an elite, warm, and highly collaborative Fictionary and Story Grid certified developmental editor specializing in complex, multi-generational thrillers (like 'A Tale of Three Cities'). 
+            You are an elite, warm, and highly collaborative Fictionary and Story Grid certified developmental editor. 
             
-            Instead of jumping straight to a final outline or making rigid assumptions (e.g. never assume characters like Queenie/Melanie are dead or that Lambert/Hubert's motives are one-dimensional):
-            1. Use gentle, hedging language ("Perhaps...", "Have you considered...", "Is it possible that...").
-            2. Ask 2 or 3 insightful clarifying questions about subplots, hidden character motivations (like Queenie's active counter-plays or Lambert's history), or financial/logistical logic before locking down a blueprint.
-            3. Invite the author to respond in the next box so you can co-create the narrative together.
+            CRITICAL CONSTRAINTS:
+            1. DO NOT HALLUCINATE OR ASSUME CANON: Never invent unstated family members, fates (e.g., assuming characters are dead when unstated), or character surnames that the writer has not explicitly provided in their inputs.
+            2. USE SOFT HEDGING: If a narrative beat is open or sparse, never issue blunt rejections. Instead, use inquisitive, soft phrasing ("Perhaps we could explore...", "Have you considered...", "Is it possible that...").
+            3. ASK 2-3 CURIOUS CLARIFYING QUESTIONS: Ask about hidden character motivations, relationships, or subplots so the author can guide you. Invite the author to reply in the next box before you write any blueprint.
             """
             
             response = client.models.generate_content(
                 model="gemini-3.8-flash",
                 contents=initial_prompt,
                 config=types.GenerateContentConfig(
-                    system_instruction="You are a collaborative, curious developmental fiction editor who uses gentle hedging and asks smart narrative questions."
+                    system_instruction="You are a collaborative, curious developmental fiction editor who uses gentle hedging, never invents unstated last names or character fates, and asks smart narrative questions."
                 )
             )
             
@@ -112,19 +113,24 @@ if st.session_state.chat_history:
             
     # Interactive response box for the writer to answer the editor's questions
     if st.session_state.clarification_needed:
-        user_reply = st.text_input("Reply to your editor / Clarify your lore (e.g., Queenie is alive, Lambert's true agenda...):", key="user_clarification_input")
+        user_reply = st.text_input("Reply to your editor / Clarify your lore (e.g., living relatives, true character agendas...):", key="user_clarification_input")
         
         if st.button("Continue Dialogue & Build Final Blueprint"):
             if user_reply:
                 st.session_state.chat_history.append({"role": "writer", "content": user_reply})
                 
-                with st.spinner("Synthesizing your lore into the final master blueprint..."):
+                with st.spinner("Synthesizing your exact lore into the final master blueprint..."):
+                    # === ADJUSTMENT 2: Strict Rule in Follow-up to Respect User Lore & Forbid Inventing Surnames ===
                     followup_prompt = f"""
                     Previous context and dialogue:
                     {st.session_state.chat_history}
                     
-                    The writer has clarified their lore and intentions above. 
-                    Now, synthesize everything into a complete, comprehensive 1,000-word skeletal narrative blueprint tailored for the {genre} genre, respecting all established character truths (e.g. Queenie's status, Lambert/Hubert's dynamics).
+                    The writer has explicitly clarified their lore, character relationships, and background details above. 
+                    
+                    CRITICAL RULES FOR SYNTHESIS:
+                    1. STRICTLY RESPECT USER CANON: Use only the character names, family statuses (e.g., living relatives), and backstories provided in the chat history. 
+                    2. NO UNSOLICITED SURNAMES: Do not invent or assign last names to characters unless explicitly provided by the writer in their prompt inputs or dialogue responses.
+                    3. Synthesize everything into a complete, comprehensive 1,000-word skeletal narrative blueprint tailored for the {genre} genre.
                     
                     At the very bottom, include this exact closing message:
                     "---
@@ -136,7 +142,7 @@ if st.session_state.chat_history:
                         model="gemini-3.8-flash",
                         contents=followup_prompt,
                         config=types.GenerateContentConfig(
-                            system_instruction="You are an expert developmental editor building the final polished story blueprint based on the author's exact canon."
+                            system_instruction="You are an expert developmental editor building the final polished story blueprint strictly adhering to the author's exact canon without inventing unstated surnames or character fates."
                         )
                     )
                     
