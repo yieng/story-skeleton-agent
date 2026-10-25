@@ -214,15 +214,21 @@ if st.session_state.workflow_stage == "awaiting_second_tweaks":
                 final_prompt = f"""
                 Full dialogue and iteration history for {writer_name}:
                 {st.session_state.chat_history}
-                
+
                 The writer has provided their final targeted changes and additional insights above. 
-                
-                CRITICAL RULES FOR FINAL SYNTHESIS:
-                1. STRICTLY RESPECT USER CANON: Use only provided names, family statuses, and backstories.
-                2. NO UNSOLICITED SURNAMES: Do not invent or assign unstated last names.
-                3. INTEGRATE FINAL TWEAKS & RESOLUTIONS: Seamlessly and succinctly weave each of the writer's final requested modifications into the narrative structure.
-                4. Synthesize everything into a complete, comprehensive skeletal narrative blueprint tailored for the {genre} genre.
-                
+
+                CRITICAL STRUCTURAL ARCHITECTURE RULES:
+                1. YOU MUST STRICTLY USE A 4-ACT MILESTONE FRAMEWORK. 
+                2. FORBIDDEN HEADERS: Never output "Act IV" or any acts beyond Act III. Everything past the Dark Night of the Soul must be compressed and integrated directly into Act III or the Epilogue/Resolution section.
+                3. MANDATORY SECTION HEADERS: You may ONLY use these exact act markers:
+                   - **ACT I: The Inciting Incident & The Fracture** (from beginning to point of no return)
+                   - **ACT II-A: The Infiltration & Rising Action** (from point of no return to midpoint)
+                   - **ACT II-B: The Severed Trust & The Dark Night** (from midpoint to dark night of the soul)
+                   - **ACT III: The Courtroom Strike, Resolution & Sequel Hook** (from dark night of the soul all the way to climax, resolution, and epilogue hook)
+
+                4. STRICTLY RESPECT USER CANON: Use only provided names, family statuses, and backstories. No unsolicited surnames.
+                5. Synthesize everything into a complete, comprehensive skeletal narrative blueprint tailored for the {genre} genre.
+
                 At the very bottom, include this exact closing message with the Calendly link:
                 "---
                 ### Ready to turn this skeleton into a fully drafted manuscript?
