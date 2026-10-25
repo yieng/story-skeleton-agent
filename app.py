@@ -1,3 +1,4 @@
+# app.py
 import os
 import streamlit as st
 from google import genai
@@ -7,7 +8,6 @@ from dotenv import load_dotenv
 # Import our custom PDF modular helper and mailer functions
 from pdfmaker import create_styled_pdf
 from mailer_native import send_verification_email, verify_token
-# Note: If your verification token logic is in mailer_native or handled separately, ensure verify_token is imported correctly.
 
 # Load local .env variables automatically
 load_dotenv()
@@ -241,7 +241,7 @@ if st.session_state.workflow_stage == "awaiting_second_tweaks":
                 st.session_state.workflow_stage = "complete"
                 st.rerun()
 
-# 7. Display Final Blueprint & Organic Post-Blueprint Lead Capture (GDPR Double-Opt-In Gate)
+# 7. Display Final Blueprint & Instant On-The-Spot Download Fallback (Plus Optional Email Gate)
 if st.session_state.workflow_stage == "complete" and st.session_state.latest_blueprint:
     st.markdown("---")
     st.subheader("Final Master Structural Blueprint (PDF Ready)")
@@ -266,44 +266,4 @@ if st.session_state.workflow_stage == "complete" and st.session_state.latest_blu
         role_label = f"**Editor:**" if msg["role"] == "editor" else f"**{writer_name}:**"
         full_transcript += f"\n\n{role_label}\n{msg['content']}\n"
 
-    full_transcript += f"""
----
-# FINAL MASTER STRUCTURAL BLUEPRINT
-{st.session_state.latest_blueprint}
-"""
-
-    pdf_data = create_styled_pdf(
-        title_text=f"Story Skeleton Blueprint & Transcript — {writer_name}",
-        full_transcript_markdown=full_transcript
-    )
-
-    # Organic Post-Blueprint Email Gate for GDPR Double-Opt-In Delivery
-    st.markdown("---")
-    st.markdown(f"### 📥 Get Your PDF Copy & Full Transcript Via Email, {writer_name}")
-    st.markdown(f"*(Since you got so carried away with your story, let's make sure a copy lands safely in your inbox!)*")
-
-    if not st.session_state.email_verified:
-        user_email = st.text_input("Enter your email address to receive your secure PDF download link:", placeholder="name@example.com")
-        
-        if st.button("Send Me My Verified PDF Blueprint"):
-            if user_email and "@" in user_email:
-                # App base URL for verification link (update with your deployed Cloud Run URL when live)
-                base_url = "https://story-skeleton-agent.streamlit.app" 
-                success = send_verification_email(user_email, writer_name, base_url)
-                if success:
-                    st.session_state.email_sent = True
-                    st.success(f"Verification email sent to **{user_email}**! Please check your inbox (and **spam/junk folder** just in case) and click the verification link to instantly unlock your PDF download.")
-                else:
-                    st.error("Failed to send verification email. Please try again or reach out via our support email - info@leeyieng.com.")
-            else:
-                st.warning("Please enter a valid email address.")
-    
-    # Once verified, show the direct download button
-    if st.session_state.email_verified:
-        st.success("Email verified successfully! You have full access to your bespoke blueprint.")
-        st.download_button(
-            label="📄 Download Full Transcript & Skeleton Blueprint (PDF)",
-            data=pdf_data,
-            file_name="story_skeleton_complete_transcript.pdf",
-            mime="application/pdf"
-        )
+    full
