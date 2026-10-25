@@ -10,7 +10,7 @@ genre = "Thriller / Suspense"
 signed_pdf_url = upload_pdf_to_gcs(dummy_pdf_bytes, writer_name)
 print(f"Generated Signed URL:\n{signed_pdf_url}\n")
 
-if signed_pdf_url and "GoogleAccessId" in signed_pdf_url:
+if signed_pdf_url and "X-Goog-Signature" in signed_pdf_url:
     print("🎉 SUCCESS: Secure V4 Signed URL generated successfully!")
 else:
     print("❌ FAILURE: Signed URL generation failed.")
