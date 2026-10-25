@@ -11,7 +11,7 @@ from pdfmaker import create_styled_pdf
 load_dotenv()
 
 # 1. Page Configuration & Landing Page Branding
-st.set_page_config(page_title="The Story Skeleton Architect | Cassandra Lee", layout="centered")
+st.set_page_config(page_title="The Story Skeleton Architect | Cassandra Lee Yieng", layout="centered")
 
 st.title("The Story Skeleton Architect")
 st.markdown("""
@@ -54,7 +54,7 @@ if "beat_resolution" not in st.session_state: st.session_state.beat_resolution =
 st.subheader("Step 1: Choose Your Commercial Genre")
 genre = st.selectbox(
     "Select your genre to align conventions and tone:",
-    ["Romance", "Thriller / Suspense", "Sci-Fi / Fantasy", "Mystery", "General Fiction"],
+    ["Romance", "Thriller / Suspense", "Sci-Fi / Fantasy", "Mystery", "General Fiction", "Crime / Mystery", "Horror", "Coming-Of-Age / Bildungsroman", "Historical Fiction", "Romantic Suspense", "Performance e.g. music, sports, drama"],
     key="genre_input"
 )
 
@@ -99,7 +99,7 @@ if st.button("Evaluate & Consult Story Beats") and st.session_state.workflow_sta
                 model="gemini-3.8-flash",
                 contents=initial_prompt,
                 config=types.GenerateContentConfig(
-                    system_instruction="You are a collaborative developmental fiction editor who uses gentle hedging, never invents unstated last names, and asks smart narrative questions."
+                    system_instruction="Type: Collaborative developmental fiction editor. Use gentle hedging, never invent unstated last names, and ask smart narrative questions."
                 )
             )
             
@@ -140,7 +140,7 @@ if st.session_state.workflow_stage == "awaiting_first_reply":
                     model="gemini-3.8-flash",
                     contents=interim_prompt,
                     config=types.GenerateContentConfig(
-                        system_instruction="You are an expert developmental editor building an interim blueprint adhering to the author's exact canon."
+                        system_instruction="Expert developmental editor building an interim blueprint adhering to the author's exact canon."
                     )
                 )
                 
@@ -155,7 +155,7 @@ if st.session_state.workflow_stage == "awaiting_first_reply":
                     model="gemini-3.8-flash",
                     contents=tweaks_prompt,
                     config=types.GenerateContentConfig(
-                        system_instruction="You are a collaborative editor asking 3 neutral, open questions for final polish."
+                        system_instruction="Collaborative editor asking 3 neutral, open questions for final polish."
                     )
                 )
                 
@@ -169,7 +169,6 @@ if st.session_state.workflow_stage == "awaiting_second_tweaks":
     st.subheader("Final Polish & Creative Tweaks")
     st.markdown(st.session_state.interim_blueprint)
     
-    # === ADJUSTMENT: Neutralized prompt label inviting subplots/twists without leading the writer ===
     user_reply_2 = st.text_area("Specify what needs to be changed / Add subplots and additional insights not captured in the interim:", key="user_reply_2_box", height=150, placeholder="Provide your final targeted changes, plot twists, or emotional beats here...")
     
     if st.button("Produce Final PDF-Ready Master Blueprint"):
@@ -186,20 +185,20 @@ if st.session_state.workflow_stage == "awaiting_second_tweaks":
                 CRITICAL RULES FOR FINAL SYNTHESIS:
                 1. STRICTLY RESPECT USER CANON: Use only provided names, family statuses, and backstories.
                 2. NO UNSOLICITED SURNAMES: Do not invent or assign unstated last names.
-                3. INTEGRATE FINAL TWEAKS: Seamlessly weave the writer's final requested modifications (such as specific character roles, emotional heartbreak, and realistic thriller resolutions like frozen inheritance for sequels) into the narrative structure.
-                4. Synthesize everything into a complete, comprehensive 1,000-word skeletal narrative blueprint tailored for the {genre} genre.
+                3. INTEGRATE FINAL TWEAKS & RESOLUTIONS: Seamlessly and succinctly weave each of the writer's final requested modifications into the narrative structure.
+                4. Synthesize everything into a complete, comprehensive skeletal narrative blueprint tailored for the {genre} genre.
                 
                 At the very bottom, include this exact closing message with the Calendly link:
                 "---
                 ### Ready to turn this skeleton into a fully drafted manuscript?
-                You don't have to navigate the blank page alone. Book a **free 15-minute 1-on-1 Story Diagnostic Call with Cassandra** at [https://calendly.com/yieng/15min](https://calendly.com/yieng/15min) to review your structural skeleton live, talk through your bottlenecks, and map out your next steps."
+                You don't have to navigate the blank page alone. Book a [**free 15-minute 1-on-1 Story Diagnostic Call with Cassandra**](https://calendly.com/yieng/15min-chat) to review your structural skeleton live, talk through your bottlenecks, and map out your next steps."
                 """
                 
                 final_response = client.models.generate_content(
                     model="gemini-3.8-flash",
                     contents=final_prompt,
                     config=types.GenerateContentConfig(
-                        system_instruction="You are an expert developmental editor producing the final master story blueprint incorporating the author's exact final tweaks."
+                        system_instruction="Expert developmental editor producing the final master story blueprint incorporating the author's exact final tweaks."
                     )
                 )
                 
@@ -207,20 +206,44 @@ if st.session_state.workflow_stage == "awaiting_second_tweaks":
                 st.session_state.workflow_stage = "complete"
                 st.rerun()
 
-# 7. Display Final Blueprint & PDF Download Option
+# 7. Display Final Blueprint & Full Transcript PDF Download Option
 if st.session_state.workflow_stage == "complete" and st.session_state.latest_blueprint:
     st.markdown("---")
     st.subheader("Final Master Structural Blueprint (PDF Ready)")
     st.markdown(st.session_state.latest_blueprint)
     
+    # Compile the full session transcript for the PDF
+    full_transcript = f"""
+# INITIAL STORY INPUTS
+- **Genre:** {genre}
+- **Inciting Incident:** {inciting}
+- **Point of No Return:** {point_of_no_return}
+- **Midpoint:** {midpoint}
+- **All Is Lost:** {all_is_lost}
+- **Climax:** {climax}
+- **Resolution:** {resolution}
+
+---
+# EDITORIAL DIALOGUE & CONVERSATION TRANSCRIPT
+"""
+    for msg in st.session_state.chat_history:
+        role_label = "**Editor:**" if msg["role"] == "editor" else "**Writer:**"
+        full_transcript += f"\n\n{role_label}\n{msg['content']}\n"
+
+    full_transcript += f"""
+---
+# FINAL MASTER STRUCTURAL BLUEPRINT
+{st.session_state.latest_blueprint}
+"""
+
     pdf_data = create_styled_pdf(
-        title_text="Story Structural Skeleton Blueprint",
-        content_markdown=st.session_state.latest_blueprint
+        title_text="Story Skeleton Blueprint & Transcript",
+        full_transcript_markdown=full_transcript
     )
     
     st.download_button(
-        label="📄 Download My Evaluated Skeleton Blueprint (PDF)",
+        label="📄 Download Full Transcript & Skeleton Blueprint (PDF)",
         data=pdf_data,
-        file_name="story_skeleton_blueprint.pdf",
+        file_name="story_skeleton_complete_transcript.pdf",
         mime="application/pdf"
     )

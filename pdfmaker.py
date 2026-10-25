@@ -6,8 +6,8 @@ from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, HRFlowable
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
-def create_styled_pdf(title_text: str, content_markdown: str) -> bytes:
-    """Takes a title and markdown content, parses formatting safely for ReportLab, and returns PDF bytes."""
+def create_styled_pdf(title_text: str, full_transcript_markdown: str) -> bytes:
+    """Takes a title and the complete conversation/blueprint markdown, parses formatting safely for ReportLab, and returns PDF bytes."""
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer,
@@ -27,60 +27,60 @@ def create_styled_pdf(title_text: str, content_markdown: str) -> bytes:
     title_style = ParagraphStyle(
         'DocTitle',
         parent=styles['Heading1'],
-        fontSize=20,
-        leading=24,
+        fontSize=18,
+        leading=22,
         textColor=PRIMARY_COLOR,
         fontName='Helvetica-Bold',
-        spaceAfter=6
+        spaceAfter=4
     )
     
     subtitle_style = ParagraphStyle(
         'DocSubTitle',
         parent=styles['Normal'],
-        fontSize=10,
-        leading=14,
+        fontSize=9,
+        leading=12,
         textColor=ACCENT_COLOR,
         fontName='Helvetica-Bold',
-        spaceAfter=15
+        spaceAfter=12
     )
     
     h1_style = ParagraphStyle(
         'Heading1_Custom',
         parent=styles['Heading2'],
-        fontSize=13,
-        leading=17,
+        fontSize=12,
+        leading=16,
         textColor=PRIMARY_COLOR,
         fontName='Helvetica-Bold',
-        spaceBefore=12,
-        spaceAfter=6
+        spaceBefore=10,
+        spaceAfter=4
     )
     
     h2_style = ParagraphStyle(
         'Heading2_Custom',
         parent=styles['Heading3'],
-        fontSize=11,
-        leading=15,
+        fontSize=10,
+        leading=14,
         textColor=ACCENT_COLOR,
         fontName='Helvetica-Bold',
-        spaceBefore=8,
-        spaceAfter=4
+        spaceBefore=6,
+        spaceAfter=3
     )
     
     body_style = ParagraphStyle(
         'Body_Custom',
         parent=styles['Normal'],
-        fontSize=10,
-        leading=15,
+        fontSize=9,
+        leading=13,
         textColor=TEXT_COLOR,
         fontName='Helvetica',
-        spaceAfter=6
+        spaceAfter=4
     )
 
     bullet_style = ParagraphStyle(
         'Bullet_Custom',
         parent=body_style,
-        leftIndent=15,
-        spaceAfter=4
+        leftIndent=12,
+        spaceAfter=3
     )
 
     story = []
@@ -88,19 +88,19 @@ def create_styled_pdf(title_text: str, content_markdown: str) -> bytes:
     # Header Section
     story.append(Paragraph(title_text, title_style))
     story.append(Paragraph("THE STORY SKELETON ARCHITECT | CASSANDRA LEE", subtitle_style))
-    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#CBD5E1'), spaceAfter=15))
+    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#CBD5E1'), spaceAfter=10))
     
     # Process markdown lines safely
-    lines = content_markdown.split('\n')
+    lines = full_transcript_markdown.split('\n')
     for line in lines:
         line_str = line.strip()
         if not line_str or line_str == '- *' or line_str == '---':
             if line_str == '---':
-                story.append(Spacer(1, 4))
-                story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#E2E8F0'), spaceAfter=8))
+                story.append(Spacer(1, 3))
+                story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#E2E8F0'), spaceAfter=6))
             continue
             
-        # Clean up stray backslashes or rogue tag issues from AI output
+        # Clean up stray ampersands
         line_str = line_str.replace('&', '&amp;')
         
         # Convert Markdown Bold and Italics safely
