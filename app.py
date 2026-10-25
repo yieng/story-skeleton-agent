@@ -22,6 +22,10 @@ Writers shouldn't feed their manuscripts into AI training grinders. This tool ac
 """)
 st.markdown("---")
 
+# 🛡️ Privacy Transparency Badge
+st.info("🛡️ **Data Sovereignty Guarantee:** Powered by a secure, paid enterprise API key. **Your inputs, character names, and creative lore are NEVER used to train AI models.** Write freely without holding back.")
+st.markdown("---")
+
 # Sidebar: Support / Troubleshooting Link
 st.sidebar.subheader("Need Help?")
 st.sidebar.markdown("Running into technical issues? [Contact Cassandra directly here](https://docs.google.com/forms/d/e/1FAIpQLSfLYPL2K3cgd_mtp01oG6AS3jnLS7bSMsTtiAUGxyuaDKNtGg/viewform?embedded=true).")
@@ -87,7 +91,7 @@ genre = st.selectbox(
 )
 
 if writer_name:
-    st.markdown(f"### It is a pleasure to collaborate with you, **{writer_name}**!")
+    st.markdown(f"#### It is a pleasure to collaborate with you, **{writer_name}**!")
 
 st.subheader("Step 2: Input Your Core Story Beats (Expanded Multi-Line)")
 st.markdown("Provide your detailed ideas below. Expand freely without being constrained by space.")
