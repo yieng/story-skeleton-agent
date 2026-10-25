@@ -1,24 +1,52 @@
 # database.py
 import os
+import json
 from google.cloud import firestore
+from google.oauth2 import service_account
 
-# Point explicitly to your downloaded service account JSON credentials
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "gcp_credentials.json"
+# 🔴 SET TO TRUE TO RE-ENABLE FIRESTORE
+ENABLE_FIRESTORE = True
 
 def get_firestore_client():
-    """Initializes and returns the Firestore client targeting your custom database ID."""
+    """Initializes Firestore using Streamlit Secrets, local JSON file, or environment."""
+    if not ENABLE_FIRESTORE:
+        return None
+
+    # 1. Try Streamlit Secrets (for Streamlit Community Cloud)
     try:
-        # Pass your custom database ID here instead of leaving it blank!
-        db = firestore.Client(database="story-skeleton-leads-db")
-        return db
+        import streamlit as st
+        if "gcp_service_account" in st.secrets:
+            creds_dict = dict(st.secrets["gcp_service_account"])
+            credentials = service_account.Credentials.from_service_account_info(creds_dict)
+            return firestore.Client(credentials=credentials, database="story-skeleton-leads-db")
+    except Exception:
+        pass
+
+    # 2. Try Local JSON File explicitly (for local Mac testing)
+    CREDENTIALS_PATH = "gcp_credentials.json"
+    if os.path.exists(CREDENTIALS_PATH):
+        try:
+            credentials = service_account.Credentials.from_service_account_file(CREDENTIALS_PATH)
+            return firestore.Client(credentials=credentials, database="story-skeleton-leads-db")
+        except Exception as e:
+            print(f"Error loading local credentials file: {e}")
+
+    # 3. Fallback to Native Cloud Environment (Cloud Run / ADC)
+    try:
+        return firestore.Client(database="story-skeleton-leads-db")
     except Exception as e:
         print(f"Firestore initialization error: {e}")
         return None
 
 def save_lead_to_gcp(writer_name: str, email: str, genre: str):
     """Saves a verified subscriber lead to Google Cloud Firestore."""
+    if not ENABLE_FIRESTORE:
+        print("Firestore is disabled.")
+        return True
+    
     db = get_firestore_client()
     if not db:
+        print("Could not obtain Firestore client.")
         return False
     
     try:

@@ -6,7 +6,8 @@ from dotenv import load_dotenv
 
 # Import our custom PDF modular helper and mailer functions
 from pdfmaker import create_styled_pdf
-from mailer_sendgrid import send_verification_email, verify_token, send_final_blueprint_email
+from mailer_native import send_verification_email, verify_token
+# Note: If your verification token logic is in mailer_native or handled separately, ensure verify_token is imported correctly.
 
 # Load local .env variables automatically
 load_dotenv()

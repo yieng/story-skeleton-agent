@@ -10,3 +10,6 @@ requests
 fastapi
 uvicorn
 reportlab
+sendgrid
+itsdangerous
+google-cloud-firestore
