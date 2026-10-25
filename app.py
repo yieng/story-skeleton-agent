@@ -248,8 +248,7 @@ if st.session_state.workflow_stage == "complete" and st.session_state.latest_blu
     st.markdown(st.session_state.latest_blueprint)
     
     # Compile the full session transcript for the PDF
-    full_transcript = f"""
-# INITIAL STORY INPUTS
+    full_transcript = f"""# INITIAL STORY INPUTS
 - **Writer Name:** {writer_name}
 - **Genre:** {genre}
 - **Inciting Incident:** {inciting}
@@ -266,4 +265,23 @@ if st.session_state.workflow_stage == "complete" and st.session_state.latest_blu
         role_label = f"**Editor:**" if msg["role"] == "editor" else f"**{writer_name}:**"
         full_transcript += f"\n\n{role_label}\n{msg['content']}\n"
 
-    full
+    full_transcript += f"""
+---
+# FINAL MASTER STRUCTURAL BLUEPRINT
+{st.session_state.latest_blueprint}
+"""
+
+    pdf_data = create_styled_pdf(
+        title_text=f"Story Skeleton Blueprint & Transcript — {writer_name}",
+        full_transcript_markdown=full_transcript
+    )
+
+    # 🚀 INSTANT ON-THE-SPOT FALLBACK DOWNLOAD BUTTON
+    st.markdown("---")
+    st.success(f"🎉 **Your Blueprint is Ready for Download, {writer_name}!**")
+    st.download_button(
+        label="📄 Download Full Transcript & Skeleton Blueprint Now (PDF)",
+        data=pdf_data,
+        file_name="story_skeleton_complete_transcript.pdf",
+        mime="application/pdf"
+    )
