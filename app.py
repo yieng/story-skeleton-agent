@@ -288,10 +288,44 @@ if st.session_state.workflow_stage == "complete" and st.session_state.latest_blu
 
     # 🚀 INSTANT ON-THE-SPOT FALLBACK DOWNLOAD BUTTON
     st.markdown("---")
-    st.success(f"🎉 **Your Blueprint is Ready for Download, {writer_name}!**")
+    st.success(f"🎉 **Your Blueprint is Ready for Immediate Download, {writer_name}!**")
     st.download_button(
         label="📄 Download Full Transcript & Skeleton Blueprint Now (PDF)",
         data=pdf_data,
         file_name="story_skeleton_complete_transcript.pdf",
         mime="application/pdf"
     )
+
+    # ☁️ 2. OPTIONAL CLOUD BACKUP & MAILING LIST OPT-IN (Option A)
+    st.markdown("---")
+    st.markdown("### 📥 Save a Permanent Cloud Backup to Your Inbox")
+    st.markdown("*(Too busy right now? Drop your email to save this blueprint to your cloud archive and receive weekly structural writing frameworks.)*")
+
+    if "lead_saved" not in st.session_state:
+        st.session_state.lead_saved = False
+
+    if not st.session_state.lead_saved:
+        opt_in_email = st.text_input("Enter your email address for your cloud backup link:", placeholder="name@example.com", key="opt_in_email_input")
+        
+        if st.button("Save to Cloud & Subscribe"):
+            if opt_in_email and "@" in opt_in_email:
+                with st.spinner("Saving PDF to GCP Cloud Storage & logging subscriber..."):
+                    from storage import upload_pdf_to_gcs
+                    from database import save_lead_to_gcp
+                    
+                    # Auto-save PDF to Google Cloud Storage
+                    gcs_pdf_url = upload_pdf_to_gcs(pdf_data, writer_name)
+                    
+                    # Save lead, genre, and PDF URL to Firestore
+                    # (Note: make sure your save_lead_to_gcp function accepts pdf_url parameter)
+                    success = save_lead_to_gcp(writer_name, opt_in_email, genre, gcs_pdf_url or "Local Download Used")
+                    
+                    if success:
+                        st.session_state.lead_saved = True
+                        st.success(f"Success! Your blueprint has been securely backed up to the cloud. Permanent link: {gcs_pdf_url}")
+                    else:
+                        st.error("Cloud storage save encountered an issue, but your direct PDF download above remains fully active.")
+            else:
+                st.warning("Please enter a valid email address.")
+    else:
+        st.success("✅ Email registered! Your permanent cloud backup is saved.")

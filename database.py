@@ -38,8 +38,8 @@ def get_firestore_client():
         print(f"Firestore initialization error: {e}")
         return None
 
-def save_lead_to_gcp(writer_name: str, email: str, genre: str):
-    """Saves a verified subscriber lead to Google Cloud Firestore."""
+def save_lead_to_gcp(writer_name: str, email: str, genre: str, pdf_url: str = "Local Download Used"):
+    """Saves a subscriber lead and permanent cloud PDF link to Google Cloud Firestore."""
     if not ENABLE_FIRESTORE:
         print("Firestore is disabled.")
         return True
@@ -55,8 +55,9 @@ def save_lead_to_gcp(writer_name: str, email: str, genre: str):
             "writer_name": writer_name,
             "email": email,
             "genre": genre,
+            "pdf_url": pdf_url,
             "timestamp": firestore.SERVER_TIMESTAMP,
-            "verified": True
+            "subscribed": True
         })
         return True
     except Exception as e:
