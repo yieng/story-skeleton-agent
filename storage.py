@@ -1,5 +1,6 @@
 # storage.py
 import os
+from datetime import timedelta
 from google.cloud import storage
 from google.oauth2 import service_account
 
@@ -28,7 +29,7 @@ def get_storage_client():
         return None
 
 def upload_pdf_to_gcs(pdf_bytes: bytes, writer_name: str) -> str:
-    """Uploads generated PDF bytes to Google Cloud Storage and returns a public URL."""
+    """Uploads generated PDF bytes to GCS and returns a secure temporary V4 Signed URL (valid for 7 days)."""
     client = get_storage_client()
     if not client:
         print("Could not obtain GCS client.")
@@ -44,7 +45,13 @@ def upload_pdf_to_gcs(pdf_bytes: bytes, writer_name: str) -> str:
         blob = bucket.blob(blob_name)
         blob.upload_from_string(pdf_bytes, content_type="application/pdf")
         
-        return f"https://storage.googleapis.com/{bucket_name}/{blob_name}"
+        # Generate a secure V4 Signed URL valid for 7 days (604800 seconds)
+        signed_url = blob.generate_signed_url(
+            version="v4",
+            expiration=timedelta(days=7),
+            method="GET"
+        )
+        return signed_url
     except Exception as e:
-        print(f"Error uploading PDF to GCS: {e}")
+        print(f"Error generating signed URL: {e}")
         return None
