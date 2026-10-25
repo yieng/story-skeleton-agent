@@ -4,8 +4,9 @@ from google import genai
 from google.genai import types
 from dotenv import load_dotenv
 
-# Import our custom PDF modular helper
+# Import our custom PDF modular helper and mailer functions
 from pdfmaker import create_styled_pdf
+from mailer_sendgrid import send_verification_email, verify_token, send_final_blueprint_email
 
 # Load local .env variables automatically
 load_dotenv()
@@ -19,6 +20,10 @@ st.markdown("""
 Writers shouldn't feed their manuscripts into AI training grinders. This tool acts as a collaborative developmental editor—building your **bamboo scaffolding** while respecting your deep narrative lore.  
 """)
 st.markdown("---")
+
+# Sidebar: Support / Troubleshooting Link
+st.sidebar.subheader("Need Help?")
+st.sidebar.markdown("Running into technical issues? [Contact Cassandra directly here](https://docs.google.com/forms/d/e/1FAIpQLSfLYPL2K3cgd_mtp01oG6AS3jnLS7bSMsTtiAUGxyuaDKNtGg/viewform?embedded=true).")
 
 # 2. Secure Gemini API Key Input (Pulls from .env or UI fallback)
 api_key = os.environ.get("GEMINI_API_KEY")
@@ -41,22 +46,47 @@ if "interim_blueprint" not in st.session_state:
     st.session_state.interim_blueprint = None
 if "latest_blueprint" not in st.session_state:
     st.session_state.latest_blueprint = None
+if "email_sent" not in st.session_state:
+    st.session_state.email_sent = False
+if "email_verified" not in st.session_state:
+    st.session_state.email_verified = False
 
-# Initialize input persistence keys for multi-line text areas
-if "beat_inciting" not in st.session_state: st.session_state.beat_inciting = ""
-if "beat_ponr" not in st.session_state: st.session_state.beat_ponr = ""
-if "beat_midpoint" not in st.session_state: st.session_state.beat_midpoint = ""
-if "beat_ail" not in st.session_state: st.session_state.beat_ail = ""
-if "beat_climax" not in st.session_state: st.session_state.beat_climax = ""
-if "beat_resolution" not in st.session_state: st.session_state.beat_resolution = ""
+# Handle Token Verification from URL Query Parameters (GDPR Double-Opt-In confirmation)
+from database import save_lead_to_gcp
+query_params = st.query_params
+if "verify" in query_params and not st.session_state.email_verified:
+    token = query_params["verify"]
+    verified_data = verify_token(token)
+    if verified_data:
+        st.session_state.email_verified = True
+        
+        # 🚀 Log the verified lead directly to your GCP Firestore database!
+        save_lead_to_gcp(
+            writer_name=verified_data['name'], 
+            email=verified_data['email'], 
+            genre=st.session_state.get('genre_input', 'Unknown')
+        )
 
-# 3. User Inputs: Genre & Multi-Line Narrative Building Blocks
-st.subheader("Step 1: Choose Your Commercial Genre")
+        st.success(f"Email successfully verified for {verified_data['name']}! Your PDF is unlocked below.")
+    else:
+        st.error("Verification link is invalid or has expired. Please request a new one.")
+
+# Initialize input persistence keys for multi-line text areas & writer name
+for key in ["beat_inciting", "beat_ponr", "beat_midpoint", "beat_ail", "beat_climax", "beat_resolution", "writer_name"]:
+    if key not in st.session_state: st.session_state[key] = ""
+
+# 3. User Inputs: Welcome Name, Genre, & Multi-Line Narrative Building Blocks
+st.subheader("Step 1: Welcome & Genre Setup")
+writer_name = st.text_input("Before we begin shaping your world, how may I address you?", value=st.session_state.writer_name, key="writer_name", placeholder="Enter your preferred name...")
+
 genre = st.selectbox(
     "Select your genre to align conventions and tone:",
     ["Romance", "Thriller / Suspense", "Sci-Fi / Fantasy", "Mystery", "General Fiction", "Crime / Mystery", "Horror", "Coming-Of-Age / Bildungsroman", "Historical Fiction", "Romantic Suspense", "Performance e.g. music, sports, drama"],
     key="genre_input"
 )
+
+if writer_name:
+    st.markdown(f"### It is a pleasure to collaborate with you, **{writer_name}**!")
 
 st.subheader("Step 2: Input Your Core Story Beats (Expanded Multi-Line)")
 st.markdown("Provide your detailed ideas below. Expand freely without being constrained by space.")
@@ -73,53 +103,57 @@ with col2:
 
 # 4. Generate Initial Collaborative Feedback & Socratic Clarifications
 if st.button("Evaluate & Consult Story Beats") and st.session_state.workflow_stage == "initial":
-    with st.spinner("Your collaborative editor is reviewing your lore and structure..."):
-        try:
-            initial_prompt = f"""
-            Genre: {genre}
-            
-            Writer's Input Structure:
-            - Inciting Incident: {inciting}
-            - Point of No Return: {point_of_no_return}
-            - Midpoint: {midpoint}
-            - All Is Lost: {all_is_lost}
-            - Climax: {climax}
-            - Resolution: {resolution}
-            
-            ROLE & INSTRUCTIONS:
-            You are an elite, warm, and highly collaborative Fictionary and Story Grid certified developmental editor. 
-            
-            CRITICAL CONSTRAINTS:
-            1. DO NOT HALLUCINATE OR ASSUME CANON: Never invent unstated family members, fates, or character surnames not provided by the writer.
-            2. USE SOFT HEDGING: Use inquisitive, soft phrasing ("Perhaps we could explore...", "Have you considered...").
-            3. ASK 2-3 CURIOUS CLARIFYING QUESTIONS: Ask about hidden character motivations, relationships, or subplots.
-            """
-            
-            response = client.models.generate_content(
-                model="gemini-3.8-flash",
-                contents=initial_prompt,
-                config=types.GenerateContentConfig(
-                    system_instruction="Type: Collaborative developmental fiction editor. Use gentle hedging, never invent unstated last names, and ask smart narrative questions."
+    if not writer_name:
+        st.warning("Please tell us your name above so your editor can properly address you!")
+    else:
+        with st.spinner(f"Your collaborative editor is reviewing your lore and structure, {writer_name}..."):
+            try:
+                initial_prompt = f"""
+                Genre: {genre}
+                Writer Name: {writer_name}
+                
+                Writer's Input Structure:
+                - Inciting Incident: {inciting}
+                - Point of No Return: {point_of_no_return}
+                - Midpoint: {midpoint}
+                - All Is Lost: {all_is_lost}
+                - Climax: {climax}
+                - Resolution: {resolution}
+                
+                ROLE & INSTRUCTIONS:
+                You are an elite, warm, and highly collaborative Fictionary and Story Grid certified developmental editor addressing the writer as {writer_name}. 
+                
+                CRITICAL CONSTRAINTS:
+                1. DO NOT HALLUCINATE OR ASSUME CANON: Never invent unstated family members, fates, or character surnames not provided by the writer.
+                2. USE SOFT HEDGING: Use inquisitive, soft phrasing ("Perhaps we could explore...", "Have you considered...").
+                3. ASK 2-3 CURIOUS CLARIFYING QUESTIONS: Ask about hidden character motivations, relationships, or subplots.
+                """
+                
+                response = client.models.generate_content(
+                    model="gemini-3.8-flash",
+                    contents=initial_prompt,
+                    config=types.GenerateContentConfig(
+                        system_instruction="Type: Collaborative developmental fiction editor. Use gentle hedging, never invent unstated last names, address the writer by name, and ask smart narrative questions."
+                    )
                 )
-            )
-            
-            st.session_state.chat_history.append({"role": "editor", "content": response.text})
-            st.session_state.workflow_stage = "awaiting_first_reply"
-            st.rerun()
-            
-        except Exception as e:
-            st.error(f"An error occurred: {e}")
+                
+                st.session_state.chat_history.append({"role": "editor", "content": response.text})
+                st.session_state.workflow_stage = "awaiting_first_reply"
+                st.rerun()
+                
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
 
 # 5. First Dialogue / Lore Clarification Loop (Multi-Line Box 1)
 if st.session_state.workflow_stage in ["awaiting_first_reply", "awaiting_second_tweaks", "complete"]:
     st.markdown("---")
-    st.subheader("Editorial Dialogue & Lore Alignment")
+    st.subheader(f"Editorial Dialogue & Lore Alignment for {writer_name}")
     
     for message in st.session_state.chat_history:
         if message["role"] == "editor":
             st.info(message["content"])
         else:
-            st.success(f"**You:** {message['content']}")
+            st.success(f"**{writer_name}:** {message['content']}")
 
 if st.session_state.workflow_stage == "awaiting_first_reply":
     user_reply_1 = st.text_area("Reply to your editor / Clarify your lore (Multi-line):", key="user_reply_1_box", height=150, placeholder="Explain living relatives, true character agendas, backstory details...")
@@ -133,7 +167,7 @@ if st.session_state.workflow_stage == "awaiting_first_reply":
                 Previous context and dialogue:
                 {st.session_state.chat_history}
                 
-                Synthesize everything into a comprehensive skeletal narrative blueprint tailored for the {genre} genre, respecting all established character truths and forbidding unstated surnames.
+                Synthesize everything into a comprehensive skeletal narrative blueprint tailored for {writer_name} in the {genre} genre, respecting all established character truths and forbidding unstated surnames.
                 """
                 
                 interim_response = client.models.generate_content(
@@ -148,7 +182,7 @@ if st.session_state.workflow_stage == "awaiting_first_reply":
                 
                 # Trigger Second Follow-up asking 3 neutral, open alignment questions
                 tweaks_prompt = f"""
-                Review the interim blueprint and dialogue above. Provide 3 targeted, open editorial questions asking the writer WHAT SUBPLOTS, EMOTIONAL NUANCES, OR ADDITIONAL INSIGHTS NEED TO BE ADJUSTED to fully align with their ultimate creative vision.
+                Review the interim blueprint and dialogue above. Provide 3 targeted, open editorial questions asking {writer_name} WHAT SUBPLOTS, EMOTIONAL NUANCES, OR ADDITIONAL INSIGHTS NEED TO BE ADJUSTED to fully align with their ultimate creative vision.
                 """
                 
                 tweaks_response = client.models.generate_content(
@@ -177,7 +211,7 @@ if st.session_state.workflow_stage == "awaiting_second_tweaks":
             
             with st.spinner("Baking your final creative adjustments into the ultimate blueprint..."):
                 final_prompt = f"""
-                Full dialogue and iteration history:
+                Full dialogue and iteration history for {writer_name}:
                 {st.session_state.chat_history}
                 
                 The writer has provided their final targeted changes and additional insights above. 
@@ -206,7 +240,7 @@ if st.session_state.workflow_stage == "awaiting_second_tweaks":
                 st.session_state.workflow_stage = "complete"
                 st.rerun()
 
-# 7. Display Final Blueprint & Full Transcript PDF Download Option
+# 7. Display Final Blueprint & Organic Post-Blueprint Lead Capture (GDPR Double-Opt-In Gate)
 if st.session_state.workflow_stage == "complete" and st.session_state.latest_blueprint:
     st.markdown("---")
     st.subheader("Final Master Structural Blueprint (PDF Ready)")
@@ -215,6 +249,7 @@ if st.session_state.workflow_stage == "complete" and st.session_state.latest_blu
     # Compile the full session transcript for the PDF
     full_transcript = f"""
 # INITIAL STORY INPUTS
+- **Writer Name:** {writer_name}
 - **Genre:** {genre}
 - **Inciting Incident:** {inciting}
 - **Point of No Return:** {point_of_no_return}
@@ -227,7 +262,7 @@ if st.session_state.workflow_stage == "complete" and st.session_state.latest_blu
 # EDITORIAL DIALOGUE & CONVERSATION TRANSCRIPT
 """
     for msg in st.session_state.chat_history:
-        role_label = "**Editor:**" if msg["role"] == "editor" else "**Writer:**"
+        role_label = f"**Editor:**" if msg["role"] == "editor" else f"**{writer_name}:**"
         full_transcript += f"\n\n{role_label}\n{msg['content']}\n"
 
     full_transcript += f"""
@@ -237,13 +272,37 @@ if st.session_state.workflow_stage == "complete" and st.session_state.latest_blu
 """
 
     pdf_data = create_styled_pdf(
-        title_text="Story Skeleton Blueprint & Transcript",
+        title_text=f"Story Skeleton Blueprint & Transcript — {writer_name}",
         full_transcript_markdown=full_transcript
     )
+
+    # Organic Post-Blueprint Email Gate for GDPR Double-Opt-In Delivery
+    st.markdown("---")
+    st.markdown(f"### 📥 Get Your PDF Copy & Full Transcript Via Email, {writer_name}")
+    st.markdown(f"*(Since you got so carried away with your story, let's make sure a copy lands safely in your inbox!)*")
+
+    if not st.session_state.email_verified:
+        user_email = st.text_input("Enter your email address to receive your secure PDF download link:", placeholder="name@example.com")
+        
+        if st.button("Send Me My Verified PDF Blueprint"):
+            if user_email and "@" in user_email:
+                # App base URL for verification link (update with your deployed Cloud Run URL when live)
+                base_url = "https://story-skeleton-agent.streamlit.app" 
+                success = send_verification_email(user_email, writer_name, base_url)
+                if success:
+                    st.session_state.email_sent = True
+                    st.success(f"Verification email sent to **{user_email}**! Please check your inbox (and **spam/junk folder** just in case) and click the verification link to instantly unlock your PDF download.")
+                else:
+                    st.error("Failed to send verification email. Please try again or reach out via our support email - info@leeyieng.com.")
+            else:
+                st.warning("Please enter a valid email address.")
     
-    st.download_button(
-        label="📄 Download Full Transcript & Skeleton Blueprint (PDF)",
-        data=pdf_data,
-        file_name="story_skeleton_complete_transcript.pdf",
-        mime="application/pdf"
-    )
+    # Once verified, show the direct download button
+    if st.session_state.email_verified:
+        st.success("Email verified successfully! You have full access to your bespoke blueprint.")
+        st.download_button(
+            label="📄 Download Full Transcript & Skeleton Blueprint (PDF)",
+            data=pdf_data,
+            file_name="story_skeleton_complete_transcript.pdf",
+            mime="application/pdf"
+        )
