@@ -312,12 +312,12 @@ if st.session_state.workflow_stage == "complete" and st.session_state.latest_blu
                 with st.spinner("Saving PDF to GCP Cloud Storage & logging subscriber..."):
                     from storage import upload_pdf_to_gcs
                     from database import save_lead_to_gcp
-                    
-                    # Auto-save PDF to Google Cloud Storage (returns secure V4 Signed URL)
-                    gcs_pdf_url = upload_pdf_to_gcs(pdf_data, writer_name)
-                    
-                    # Save lead, genre, and signed PDF URL to Firestore
-                    success = save_lead_to_gcp(writer_name, opt_in_email, genre, gcs_pdf_url or "Local Download Used")
+
+                    # Auto-save PDF to Google Cloud Storage (returns signed URL and permanent blob name)
+                    gcs_pdf_url, blob_name = upload_pdf_to_gcs(pdf_data, writer_name)
+
+                    # Save lead, genre, initial signed URL, and permanent blob name to Firestore
+                    success = save_lead_to_gcp(writer_name, opt_in_email, genre, gcs_pdf_url or "Local Download Used", blob_name or "")                    
                     
                     if success:
                         st.session_state.lead_saved = True

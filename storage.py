@@ -28,12 +28,12 @@ def get_storage_client():
         print(f"GCS client initialization error: {e}")
         return None
 
-def upload_pdf_to_gcs(pdf_bytes: bytes, writer_name: str) -> str:
-    """Uploads generated PDF bytes to GCS with a unique timestamp and returns a 7-day V4 Signed URL."""
+def upload_pdf_to_gcs(pdf_bytes: bytes, writer_name: str):
+    """Uploads PDF bytes to GCS with a unique timestamp. Returns (signed_url, blob_name)."""
     client = get_storage_client()
     if not client:
         print("Could not obtain GCS client.")
-        return None
+        return None, None
     
     bucket_name = os.environ.get("GCS_BUCKET_NAME", "story-skeleton-pdfs")
     
@@ -41,20 +41,43 @@ def upload_pdf_to_gcs(pdf_bytes: bytes, writer_name: str) -> str:
         bucket = client.bucket(bucket_name)
         safe_name = "".join(c for c in writer_name if c.isalnum() or c in (' ', '_', '-')).strip().replace(" ", "_")
         
-        # Unique timestamp prevents collision / retention overwrite errors
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         blob_name = f"blueprints/{safe_name}_{timestamp}_story_skeleton.pdf"
         
         blob = bucket.blob(blob_name)
         blob.upload_from_string(pdf_bytes, content_type="application/pdf")
         
-        # Generate a secure V4 Signed URL valid for 7 days
         signed_url = blob.generate_signed_url(
             version="v4",
             expiration=timedelta(days=7),
             method="GET"
         )
-        return signed_url
+        return signed_url, blob_name
     except Exception as e:
         print(f"Error generating signed URL: {e}")
+        return None, None
+
+def regenerate_signed_url(blob_name: str) -> str:
+    """Takes a persistent blob path and generates a fresh 7-day V4 Signed URL on demand."""
+    client = get_storage_client()
+    if not client:
+        return None
+    
+    bucket_name = os.environ.get("GCS_BUCKET_NAME", "story-skeleton-pdfs")
+    
+    try:
+        bucket = client.bucket(bucket_name)
+        blob = bucket.blob(blob_name)
+        
+        if not blob.exists():
+            return None
+            
+        fresh_url = blob.generate_signed_url(
+            version="v4",
+            expiration=timedelta(days=7),
+            method="GET"
+        )
+        return fresh_url
+    except Exception as e:
+        print(f"Error regenerating signed URL: {e}")
         return None
