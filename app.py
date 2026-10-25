@@ -91,7 +91,7 @@ genre = st.selectbox(
 )
 
 if writer_name:
-    st.markdown(f"#### It is a pleasure to collaborate with you, **{writer_name}**!")
+    st.markdown(f"#### 📝 It is a pleasure to collaborate with you, **{writer_name}**! 🤗")
 
 st.subheader("Step 2: Input Your Core Story Beats (Expanded Multi-Line)")
 st.markdown("Provide your detailed ideas below. Expand freely without being constrained by space.")
