@@ -313,11 +313,10 @@ if st.session_state.workflow_stage == "complete" and st.session_state.latest_blu
                     from storage import upload_pdf_to_gcs
                     from database import save_lead_to_gcp
                     
-                    # Auto-save PDF to Google Cloud Storage
+                    # Auto-save PDF to Google Cloud Storage (returns secure V4 Signed URL)
                     gcs_pdf_url = upload_pdf_to_gcs(pdf_data, writer_name)
                     
-                    # Save lead, genre, and PDF URL to Firestore
-                    # (Note: make sure your save_lead_to_gcp function accepts pdf_url parameter)
+                    # Save lead, genre, and signed PDF URL to Firestore
                     success = save_lead_to_gcp(writer_name, opt_in_email, genre, gcs_pdf_url or "Local Download Used")
                     
                     if success:
