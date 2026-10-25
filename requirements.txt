@@ -13,3 +13,4 @@ reportlab
 sendgrid
 itsdangerous
 google-cloud-firestore
+google-cloud-storage
