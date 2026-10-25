@@ -1,13 +1,27 @@
 # test_db.py
+from pdfmaker import create_styled_pdf
 from storage import upload_pdf_to_gcs
 from database import save_lead_to_gcp
 
-print("1. Testing secure V4 Signed URL generation & PDF upload to GCS...")
-dummy_pdf_bytes = b"%PDF-1.4 Secure Signed URL Test Blueprint Content..."
-writer_name = "Cassandra Lee"
-genre = "Thriller / Suspense"
+print("1. Generating real styled PDF blueprint...")
+real_pdf_bytes = create_styled_pdf(
+    title_text="Story Skeleton Blueprint & Transcript — Cassandra Lee",
+    full_transcript_markdown="""# INITIAL STORY INPUTS
+- **Writer Name:** Cassandra Lee
+- **Genre:** Thriller / Suspense
+- **Inciting Incident:** A mysterious encrypted flash drive arrives at the door.
 
-signed_pdf_url = upload_pdf_to_gcs(dummy_pdf_bytes, writer_name)
+---
+# FINAL MASTER STRUCTURAL BLUEPRINT
+**ACT I:** The ordinary world is shattered.
+**ACT II-A:** Crossing into danger.
+**ACT II-B:** The dark night of the soul.
+**ACT III:** The final courtroom showdown.
+"""
+)
+
+print("2. Uploading real PDF to Google Cloud Storage & generating V4 Signed URL...")
+signed_pdf_url = upload_pdf_to_gcs(real_pdf_bytes, "Cassandra Lee")
 print(f"Generated Signed URL:\n{signed_pdf_url}\n")
 
 if signed_pdf_url and "X-Goog-Signature" in signed_pdf_url:
@@ -15,12 +29,12 @@ if signed_pdf_url and "X-Goog-Signature" in signed_pdf_url:
 else:
     print("❌ FAILURE: Signed URL generation failed.")
 
-print("\n2. Testing Firestore Lead Logging with signed pdf_url...")
+print("\n3. Testing Firestore Lead Logging with signed pdf_url...")
 success = save_lead_to_gcp(
-    writer_name=writer_name,
+    writer_name="Cassandra Lee",
     email="cassandra@leeyieng.com",
-    genre=genre,
-    pdf_url=signed_pdf_url or "Fallback Link"
+    genre="Thriller / Suspense",
+    pdf_url=signed_pdf_url
 )
 
 if success:
