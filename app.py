@@ -232,6 +232,7 @@ if st.session_state.workflow_stage == "awaiting_second_tweaks":
 
                 4. STRICTLY RESPECT USER CANON: Use only provided names, family statuses, and backstories. No unsolicited surnames.
                 5. Synthesize everything into a complete, comprehensive skeletal narrative blueprint tailored for the {genre} genre.
+                6. STRICT TERMINOLOGY: When referring to each of the story beats, do NOT associate them with either "Story Grid" or "Fictionary" (e.g. do NOT say "From a Story Grid structural lens") - they are timeless narrative beats. Instead you say "According to established storytelling principles" each and every time, without linking any beat to proprietary storytelling frameworks.
 
                 At the very bottom, include this exact closing message with the Calendly link:
                 "---
