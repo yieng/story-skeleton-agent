@@ -1,11 +1,13 @@
-# storage.py
+    # storage.py
 import os
 from datetime import datetime, timedelta
 from google.cloud import storage
 from google.oauth2 import service_account
 
 def get_storage_client():
-    """Initializes Google Cloud Storage using Streamlit Secrets or local credentials."""
+    """Initializes Google Cloud Storage using Streamlit Secrets, environment variables, or local JSON."""
+    
+    # 1. Try Streamlit Secrets (for Streamlit Community Cloud)
     try:
         import streamlit as st
         if "gcp_service_account" in st.secrets:
@@ -15,6 +17,31 @@ def get_storage_client():
     except Exception:
         pass
 
+    # 2. Try Environment Variables (if injected directly into cloud env or .env)
+    try:
+        private_key = os.environ.get("private_key")
+        client_email = os.environ.get("client_email")
+        project_id = os.environ.get("project_id", "story-skeleton-leads")
+        
+        if private_key and client_email:
+            creds_dict = {
+                "type": os.environ.get("type", "service_account"),
+                "project_id": project_id,
+                "private_key_id": os.environ.get("private_key_id"),
+                "private_key": private_key.replace("\\n", "\n"),
+                "client_email": client_email,
+                "client_id": os.environ.get("client_id"),
+                "auth_uri": os.environ.get("auth_uri", "https://accounts.google.com/o/oauth2/auth"),
+                "token_uri": os.environ.get("token_uri", "https://oauth2.googleapis.com/token"),
+                "auth_provider_x509_cert_url": os.environ.get("auth_provider_x509_cert_url", "https://www.googleapis.com/oauth2/v1/certs"),
+                "client_x509_cert_url": os.environ.get("client_x509_cert_url")
+            }
+            credentials = service_account.Credentials.from_service_account_info(creds_dict)
+            return storage.Client(credentials=credentials)
+    except Exception as e:
+        print(f"Error loading env GCS credentials: {e}")
+
+    # 3. Fallback to Local JSON File (for local Mac testing)
     CREDENTIALS_PATH = "gcp_credentials.json"
     if os.path.exists(CREDENTIALS_PATH):
         try:
@@ -22,6 +49,7 @@ def get_storage_client():
         except Exception as e:
             print(f"Error loading local GCS credentials: {e}")
 
+    # 4. Ultimate fallback to ADC
     try:
         return storage.Client()
     except Exception as e:

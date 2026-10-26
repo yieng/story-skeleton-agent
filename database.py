@@ -10,6 +10,8 @@ ENABLE_FIRESTORE = True
 def get_firestore_client():
     if not ENABLE_FIRESTORE:
         return None
+
+    # 1. Try Streamlit Secrets
     try:
         import streamlit as st
         if "gcp_service_account" in st.secrets:
@@ -19,6 +21,29 @@ def get_firestore_client():
     except Exception:
         pass
 
+    # 2. Try Environment Variables
+    try:
+        private_key = os.environ.get("private_key")
+        client_email = os.environ.get("client_email")
+        if private_key and client_email:
+            creds_dict = {
+                "type": os.environ.get("type", "service_account"),
+                "project_id": os.environ.get("project_id", "story-skeleton-leads"),
+                "private_key_id": os.environ.get("private_key_id"),
+                "private_key": private_key.replace("\\n", "\n"),
+                "client_email": client_email,
+                "client_id": os.environ.get("client_id"),
+                "auth_uri": os.environ.get("auth_uri", "https://accounts.google.com/o/oauth2/auth"),
+                "token_uri": os.environ.get("token_uri", "https://oauth2.googleapis.com/token"),
+                "auth_provider_x509_cert_url": os.environ.get("auth_provider_x509_cert_url", "https://www.googleapis.com/oauth2/v1/certs"),
+                "client_x509_cert_url": os.environ.get("client_x509_cert_url")
+            }
+            credentials = service_account.Credentials.from_service_account_info(creds_dict)
+            return firestore.Client(credentials=credentials, database="story-skeleton-leads-db")
+    except Exception as e:
+        print(f"Error loading env Firestore credentials: {e}")
+
+    # 3. Fallback to Local JSON File
     CREDENTIALS_PATH = "gcp_credentials.json"
     if os.path.exists(CREDENTIALS_PATH):
         try:
@@ -27,6 +52,7 @@ def get_firestore_client():
         except Exception as e:
             print(f"Error loading local credentials file: {e}")
 
+    # 4. Ultimate fallback
     try:
         return firestore.Client(database="story-skeleton-leads-db")
     except Exception as e:
@@ -34,7 +60,6 @@ def get_firestore_client():
         return None
 
 def save_lead_to_gcp(writer_name: str, email: str, genre: str, pdf_url: str = "Local Download Used", blob_name: str = ""):
-    """Saves subscriber lead, permanent blob path, initial signed URL, and 90-day expiry to Firestore."""
     if not ENABLE_FIRESTORE:
         print("Firestore is disabled.")
         return True
@@ -51,8 +76,8 @@ def save_lead_to_gcp(writer_name: str, email: str, genre: str, pdf_url: str = "L
             "email": email,
             "genre": genre,
             "initial_pdf_url": pdf_url,
-            "blob_name": blob_name,  # 👈 Permanent path for on-demand regeneration
-            "access_expiry": datetime.utcnow() + timedelta(days=90),  # 3-month window
+            "blob_name": blob_name,
+            "access_expiry": datetime.utcnow() + timedelta(days=90),
             "timestamp": firestore.SERVER_TIMESTAMP,
             "subscribed": True
         })
