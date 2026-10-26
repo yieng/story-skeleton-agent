@@ -299,8 +299,8 @@ if st.session_state.workflow_stage == "complete" and st.session_state.latest_blu
 
     # ☁️ 2. OPTIONAL CLOUD BACKUP & MAILING LIST OPT-IN (Option A)
     st.markdown("---")
-    st.markdown("### 📥 Save a Permanent Cloud Backup to Your Inbox")
-    st.markdown("*(Too busy right now? Drop your email to save this blueprint to your cloud archive and receive weekly structural writing frameworks.)*")
+    st.markdown("### 📥 Save a Secure 90-Day Cloud Archive Backup to Your Inbox")
+    st.markdown("*(Too busy right now? Drop your email to save this blueprint to your cloud archive and receive regular writing tips.)*")
 
     if "lead_saved" not in st.session_state:
         st.session_state.lead_saved = False
@@ -322,9 +322,9 @@ if st.session_state.workflow_stage == "complete" and st.session_state.latest_blu
                     
                     if success:
                         st.session_state.lead_saved = True
-                        st.success(f"Success! Your blueprint has been securely backed up to the cloud. Permanent link: {gcs_pdf_url}")
+                        st.success(f"Success! Your blueprint is securely backed up in your 90-day cloud archive. Initial download link (refreshed via future dispatches): {gcs_pdf_url}")
                     else:
-                        st.error("Cloud storage save encountered an issue, but your direct PDF download above remains fully active.")
+                        st.error("Cloud storage save encountered an issue, but your direct PDF download above remains fully active. Download it now.")
             else:
                 st.warning("Please enter a valid email address.")
     else:
