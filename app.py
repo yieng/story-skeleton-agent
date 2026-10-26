@@ -318,11 +318,14 @@ if st.session_state.workflow_stage == "complete" and st.session_state.latest_blu
                     gcs_pdf_url, blob_name = upload_pdf_to_gcs(pdf_data, writer_name)
 
                     # Save lead, genre, initial signed URL, and permanent blob name to Firestore
-                    success = save_lead_to_gcp(writer_name, opt_in_email, genre, gcs_pdf_url or "Local Download Used", blob_name or "")                    
+                    action_type, success = save_lead_to_gcp(writer_name, opt_in_email, genre, gcs_pdf_url or "Local Download Used", blob_name or "")                    
                     
                     if success:
                         st.session_state.lead_saved = True
-                        st.success(f"Success! Your blueprint is securely backed up in your 90-day cloud archive. Initial download link (refreshed via future dispatches): {gcs_pdf_url}")
+                        if action_type == "updated":
+                            st.success(f"Success! Your cloud archive has been updated with your latest blueprint. Access link: {gcs_pdf_url}")
+                        else:
+                            st.success(f"Success! Your blueprint is securely backed up in your 90-day cloud archive. Initial download link (refreshed via future dispatches): {gcs_pdf_url}")
                     else:
                         st.error("Cloud storage save encountered an issue, but your direct PDF download above remains fully active. Download it now.")
             else:

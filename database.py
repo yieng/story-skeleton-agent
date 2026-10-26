@@ -71,16 +71,29 @@ def save_lead_to_gcp(writer_name: str, email: str, genre: str, pdf_url: str = "L
     
     try:
         leads_ref = db.collection("leads")
-        leads_ref.add({
+        
+        # Check if email already exists to prevent duplicates
+        query = leads_ref.where("email", "==", email).limit(1).get()
+        
+        lead_data = {
             "writer_name": writer_name,
             "email": email,
             "genre": genre,
             "initial_pdf_url": pdf_url,
             "blob_name": blob_name,
-            "access_expiry": datetime.utcnow() + timedelta(days=90),
+            "access_expiry": datetime.now(datetime.timezone.utc) + timedelta(days=90),
             "timestamp": firestore.SERVER_TIMESTAMP,
             "subscribed": True
-        })
+        }
+        
+        if len(query) > 0:
+            # Update existing document so we don't create duplicates!
+            doc_id = query[0].id
+            leads_ref.document(doc_id).update(lead_data)
+        else:
+            # Create a brand new record
+            leads_ref.add(lead_data)
+            
         return True
     except Exception as e:
         print(f"Error saving lead to GCP: {e}")
