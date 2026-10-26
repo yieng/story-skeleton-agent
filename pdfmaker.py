@@ -87,7 +87,7 @@ def create_styled_pdf(title_text: str, full_transcript_markdown: str) -> bytes:
     
     # Header Section
     story.append(Paragraph(title_text, title_style))
-    story.append(Paragraph("THE STORY SKELETON ARCHITECT | CASSANDRA LEE", subtitle_style))
+    story.append(Paragraph("THE STORY SKELETON ARCHITECT | CASSANDRA LEE YIENG", subtitle_style))
     story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#CBD5E1'), spaceAfter=10))
     
     # Process markdown lines safely
