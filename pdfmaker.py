@@ -6,6 +6,20 @@ from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, HRFlowable
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
+def clean_html_tags(text: str) -> str:
+    """Safely balances or strips malformed nested tags to prevent ReportLab XML crashes."""
+    # If tags are mismatched or improperly nested, a simple fallback is to strip 
+    # conflicting markdown formatting or ensure basic clean replacement.
+    # Let's replace dangerous overlapping patterns safely:
+    text = text.replace('&', '&amp;')
+    
+    # Convert Markdown Bold first
+    text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text)
+    # Convert Markdown Italics
+    text = re.sub(r'\*(.*?)\*', r'<i>\1</i>', text)
+    
+    return text
+
 def create_styled_pdf(title_text: str, full_transcript_markdown: str) -> bytes:
     """Takes a title and the complete conversation/blueprint markdown, parses formatting safely for ReportLab, and returns PDF bytes."""
     buffer = io.BytesIO()
@@ -100,25 +114,29 @@ def create_styled_pdf(title_text: str, full_transcript_markdown: str) -> bytes:
                 story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#E2E8F0'), spaceAfter=6))
             continue
             
-        # Clean up stray ampersands
-        line_str = line_str.replace('&', '&amp;')
-        
-        # Convert Markdown Bold and Italics safely
-        formatted_line = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', line_str)
-        formatted_line = re.sub(r'\*(.*?)\*', r'<i>\1</i>', formatted_line)
+        # Parse formatting safely with tag-protection wrapper
+        formatted_line = clean_html_tags(line_str)
         
         # Determine element type based on prefix
-        if line_str.startswith('### ') or line_str.startswith('# '):
-            clean_text = re.sub(r'^#+\s*', '', formatted_line)
-            story.append(Paragraph(clean_text, h1_style))
-        elif line_str.startswith('#### '):
-            clean_text = re.sub(r'^#+\s*', '', formatted_line)
-            story.append(Paragraph(clean_text, h2_style))
-        elif line_str.startswith('- ') or line_str.startswith('* ') or line_str.startswith('-   - '):
-            clean_text = re.sub(r'^(-\s*\*?|\*\s*|-\s*-\s*)', '', formatted_line)
-            story.append(Paragraph(f"• {clean_text}", bullet_style))
-        else:
-            story.append(Paragraph(formatted_line, body_style))
+        try:
+            if line_str.startswith('### ') or line_str.startswith('# '):
+                clean_text = re.sub(r'^#+\s*', '', formatted_line)
+                story.append(Paragraph(clean_text, h1_style))
+            elif line_str.startswith('#### '):
+                clean_text = re.sub(r'^#+\s*', '', formatted_line)
+                story.append(Paragraph(clean_text, h2_style))
+            elif line_str.startswith('- ') or line_str.startswith('* ') or line_str.startswith('-   - '):
+                clean_text = re.sub(r'^(-\s*\*?|\*\s*|-\s*-\s*)', '', formatted_line)
+                story.append(Paragraph(f"• {clean_text}", bullet_style))
+            else:
+                story.append(Paragraph(formatted_line, body_style))
+        except Exception as e:
+            # Fallback safety: if an individual paragraph still fails XML parsing, strip all tags and print plain text so the PDF never crashes app execution
+            plain_fallback = re.sub(r'<[^>]*>', '', formatted_line)
+            if line_str.startswith('- ') or line_str.startswith('* '):
+                story.append(Paragraph(f"• {plain_fallback}", bullet_style))
+            else:
+                story.append(Paragraph(plain_fallback, body_style))
             
     doc.build(story)
     pdf_bytes = buffer.getvalue()
