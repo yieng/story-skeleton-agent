@@ -102,7 +102,7 @@ with col1:
     point_of_no_return = st.text_area("2. Point of No Return", value=st.session_state.beat_ponr, key="beat_ponr", height=120, placeholder="Where do they fully cross the threshold?")
     midpoint = st.text_area("3. Midpoint / Moment of Truth", value=st.session_state.beat_midpoint, key="beat_midpoint", height=120, placeholder="What false belief is proven false here?")
 with col2:
-    all_is_lost = st.text_area("4. All Is Lost Moment", value=st.session_state.beat_ail, key="beat_ail", height=120, placeholder="What is the lowest point/failure?")
+    all_is_lost = st.text_area("4. All Is Lost Moment", value=st.session_state.beat_ail, key="beat_ail", height=120, placeholder="What is the lowest point/failure, and what is the final revelation the protagonist discovers that helps them make the decision in the Climax?")
     climax = st.text_area("5. Crisis-Driven Climax", value=st.session_state.beat_climax, key="beat_climax", height=120, placeholder="What is the final showdown choice?")
     resolution = st.text_area("6. Resolution", value=st.session_state.beat_resolution, key="beat_resolution", height=120, placeholder="How has the world/protagonist changed?")
 
