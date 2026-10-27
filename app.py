@@ -276,6 +276,14 @@ if st.session_state.workflow_stage == "complete" and st.session_state.latest_blu
         role_label = f"**Editor:**" if msg["role"] == "editor" else f"**{writer_name}:**"
         full_transcript += f"\n\n{role_label}\n{msg['content']}\n"
 
+    # ✨ Include the Interim Master Blueprint so it's permanently captured!
+    if st.session_state.interim_blueprint:
+        full_transcript += f"""
+---
+# INTERIM MASTER STRUCTURAL BLUEPRINT
+{st.session_state.interim_blueprint}
+"""
+
     full_transcript += f"""
 ---
 # FINAL MASTER STRUCTURAL BLUEPRINT
