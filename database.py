@@ -1,7 +1,7 @@
 # database.py
 import os
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from google.cloud import firestore
 from google.oauth2 import service_account
 
@@ -62,17 +62,17 @@ def get_firestore_client():
 def save_lead_to_gcp(writer_name: str, email: str, genre: str, pdf_url: str = "Local Download Used", blob_name: str = ""):
     if not ENABLE_FIRESTORE:
         print("Firestore is disabled.")
-        return True
+        return "created", True
     
     db = get_firestore_client()
     if not db:
         print("Could not obtain Firestore client.")
-        return False
+        return "error", False
     
     try:
         leads_ref = db.collection("leads")
         
-        # Check if email already exists to prevent duplicates
+        # Check if email already exists to prevent duplicate rows (Upsert approach)
         query = leads_ref.where("email", "==", email).limit(1).get()
         
         lead_data = {
@@ -81,20 +81,20 @@ def save_lead_to_gcp(writer_name: str, email: str, genre: str, pdf_url: str = "L
             "genre": genre,
             "initial_pdf_url": pdf_url,
             "blob_name": blob_name,
-            "access_expiry": datetime.now(datetime.timezone.utc) + timedelta(days=90),
+            # ✨ Correct timezone-aware datetime usage
+            "access_expiry": datetime.now(timezone.utc) + timedelta(days=90),
             "timestamp": firestore.SERVER_TIMESTAMP,
             "subscribed": True
         }
         
         if len(query) > 0:
-            # Update existing document so we don't create duplicates!
             doc_id = query[0].id
             leads_ref.document(doc_id).update(lead_data)
+            return "updated", True
         else:
-            # Create a brand new record
             leads_ref.add(lead_data)
+            return "created", True
             
-        return True
     except Exception as e:
         print(f"Error saving lead to GCP: {e}")
-        return False
+        return "error", False
